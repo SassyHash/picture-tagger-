@@ -1,0 +1,15 @@
+.canvas {
+  margin: auto;
+
+  height: 500px;
+  width: 500px;
+
+  background: gray;
+}
+
+.square {
+  width: 50px;
+  height: 50px;
+
+  position: absolute;
+}

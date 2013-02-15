@@ -1,4 +1,12 @@
 var tagger = (function(){
+
+  // Secrets "database" table
+  var secrets = [];
+
+  function tagsController(){
+
+  }
+
   function makeClicksController(){
     console.log("Making clicks controller");
 
