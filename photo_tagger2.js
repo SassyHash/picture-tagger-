@@ -1,117 +1,175 @@
-var tagger = (function(){
+var Tagger = (function(){
 
-  // Secrets "database" table
-  var secrets = [];
+  // Constants
+  var box = {
+    size: 100,
+    border: 10
+  };
+  var image_name = null;
+  var targeter = null;
+  var targeter_x = null;
+  var targeter_y = null;
+  var container = null;
 
-  function tagsController(){
+  // "database" tables
+  var tags = [];
+  var names = [ "Waldo",
+                "Wizard",
+                "Woof",
+                "Wenda",
+                "Wilma",
+                "Odlaw",
+                "Watcher" ];
+
+  function Tag(x, y, name, image_name){
+    this.x = x;
+    this.y = y;
+    this.name = name;
+    this.image_name = image_name;
+  }
+
+  // The initial setup function
+  function Initializer(container){
+    Tagger.container = container;
+    var image = container.find("img");
+    Tagger.image_name = image.attr('name');
+    var that = this;
+    console.log(Tagger.tags);
+
+    this.render = function(){
+      Tagger.buildTagTargeter(container);
+      image.click(Tagger.targetTag);
+      console.log(Tagger.hideTags);
+      image.hover(Tagger.showTags, Tagger.hideTags);
+    };
+  }
+
+  function targetTag(event){
+
+    var run = function()
+    {
+      x = event.pageX;
+      y = event.pageY;
+      Tagger.targeter_x = x;
+      Tagger.targeter_y = y;
+    };
+
+    // Render the "new page", which is a new tag plus menu
+    var render = function(){
+      console.log(x);
+      console.log(y);
+      Tagger.targeter
+        .css("left", x)
+        .css("top", y)
+        .removeClass("hide")
+        .addClass("show");
+
+      target_names = $("#target_names");
+    };
+
+    run();
+    render();
+  }
+
+  function createTag(event){
+    // catch the tag's coordinates and build a new tag
+    var tag_x = Tagger.targeter_x;
+    var tag_y = Tagger.targeter_y;
+    var name = $(event.target).attr("name");
+    var image_name = Tagger.image_name;
+
+
+    // create the tag
+    Tagger.container
+      .append("<div class='box tag show' name='" +
+        name +
+        "' style='left:" +
+        tag_x + "; top:" +
+        tag_y +
+        "'>" +
+        name +
+        "</div>");
+
+    // store the tag locally
+    var tag = new Tag(tag_x, tag_y, name, image_name);
+    console.log(tag);
+    Tagger.tags.push(tag);
+
+    // push the tag into the database
+
 
   }
 
-  function makeClicksController(){
-    console.log("Making clicks controller");
+  function showTags(){
+    console.log("SHOWING");
+    Tagger.container.find(".tag")
+      .removeClass("hide")
+      .addClass("show");
+  }
 
-    var tagController = {
-      names: ["Waldo", "Wizard", "Woof", "Wenda", "Wilma", "Odlaw", "Watcher"],
-      tagMode: false,
+  function hideTags(){
+    console.log("HIDING");
+    Tagger.container.find(".tag")
+      .removeClass("show")
+      .addClass("hide");
+  }
 
-      toggleTagMode: function(){
-        this.tagMode = !this.tagMode;
-      },
+  // Construct the targeting box and menu and add the click listeners for it
+  function buildTagTargeter(){
+    var li = "<li class='name_selector'></li>";
+    Tagger.container.append("<div id='tag_targeter' class='hide'></div>");
+    Tagger.targeter = $('#tag_targeter');
 
-      handleClick: function(event){
-        if (!this.tagMode) {
-          this.toggleTagMode();
-          console.log(this);
-          var relPos = {
-            x: event.pageX,
-            y: event.pageY
-          };
-          this.buildSquare(relPos);
-        }
-        else
-        {
-          this.killEverything();
-          this.toggleTagMode();
-        };
-      },
+    Tagger.targeter
+      .append("<div id='target_box' class='box'></div>")
+      .append("<ul id='target_names'></ul>");
 
-      // remove targeting box and menu
-      killEverything: function(){
-        $("#table").html("");
-        $(".target").remove();
-      },
+    Tagger.names.forEach(function(name){
+      Tagger.targeter.find("#target_names")
+        .append("<li class='name_selector' name='" + name + "'>" + name + "</li>");
+    });
 
-      buildSquare: function(relPos){
+    // add the cancel button
+    Tagger.targeter
+      .append("<img class='close' src='close.png' />");
 
-        $(".container").append(
-          $("<div></div>")
-          .addClass("box")
-          .addClass("target")
-          .css("left",relPos.x)
-          .css("top", relPos.y)
-          );
-        this.buildMenu(relPos);
-      },
+    // patch on the listeners
+    Tagger.targeter.find(".close").click(function(){
+      Tagger.targeter.addClass("hide");
+    });
+    Tagger.targeter.find(".name_selector").click(createTag);
+  }
 
-      handleButtonPress: function(){
-        if($('.tagged').css("visibility") == "hidden"){
-          $('.tagged').css('visibility','visible');
-        }
-        else
-        {
-          $('.tagged').css('visibility','hidden');
-        }
-      },
+  // Construct the container
 
-      // builds the menu, sets up the hover listener, sets up the click listener
-      buildMenu: function(relPos){
 
-        // Create the menu
-        var targetWidth = parseInt($(".target").css("width"))+15;
-        $("#table").html("");
-        $("#table")
-          .css("left", (parseInt(relPos.x) + targetWidth))
-          .css("top", parseInt(relPos.y) - 8);
-        this.names.forEach( function (name) {
-          $("#table").append($("<li>"+name+"</li>"));
-        });
+  // Returns all our top level functions and variables
+  return {
+    // variables
+    box: box,
+    Tag: Tag,
+    tags: tags,
+    names: names,
+    image_name: image_name,
+    targeter: targeter,
+    container: container,
 
-        // Hover on the list listener
-        $("li").hover(
-          function(){
-            $(this).addClass("hover");
-          },
-          function(){
-            $(this).removeClass("hover");
-          }
-        );
-
-        // Menu click listener
-        $("li").click(function(event) {
-          name = event.target.innerHTML;
-          console.log(name);
-          $('.target').append(name);
-          $(".target")
-            .removeClass("target")
-            .addClass("tagged")
-            .attr("name", name);
-          $("#table").html("");
-          this.tagMode = false;
-        }.bind(this));
-      }
-    };
-    return tagController;
+    // functions etc.
+    buildTagTargeter: buildTagTargeter,
+    Initializer: Initializer,
+    targetTag: targetTag,
+    createTage: createTag,
+    showTags: showTags,
+    hideTags: hideTags,
   };
 
-  return {
-    makeClicksController: makeClicksController
-  }
 })();
 
 
 // RUN SCRIPT (after page load)
 $(function() {
-  var cc = tagger.makeClicksController();
-  $('#image').click(cc.handleClick.bind(cc));
-  $('button').click(cc.handleButtonPress.bind(cc));
+  var container = $("#container");
+
+  var initializer = new Tagger.Initializer(container);
+  initializer.render();
 });
